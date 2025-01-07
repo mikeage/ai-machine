@@ -49,7 +49,7 @@ aws ec2 delete-key-pair --key-name "$KEY_NAME"
 # Remove local key file
 if [ -f "${KEY_NAME}.pem" ]; then
     echo "Removing local key file ${KEY_NAME}.pem..."
-    rm "${KEY_NAME}.pem"
+    rm -f "${KEY_NAME}.pem"
 fi
 
 echo "Cleanup complete!"
