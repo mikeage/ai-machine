@@ -44,14 +44,13 @@ aws ec2 authorize-security-group-ingress \
 echo "Added security group rules for SSH access"
 
 # Get latest Ubuntu AMI ID
-AMI_ID=$(aws ec2 describe-images \
-	--owners 099720109477 \
-	--filters "Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*" \
-	"Name=state,Values=available" \
-	--query "sort_by(Images, &CreationDate)[-1].ImageId" \
-	--output text)
-
+# Ubuntu
+AMI_ID=$(aws ec2 describe-images --owners 099720109477 --filters "Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*" "Name=state,Values=available" --query "sort_by(Images, &CreationDate)[-1].ImageId" --output text)
+LOGIN_USER="ubuntu"
+# Debian
 AMI_ID=$(aws ec2 describe-images --owners 136693071363 --query "sort_by(Images, &CreationDate)[-1].ImageId" --filters "Name=name,Values=debian-12-amd64-*" --output text)
+LOGIN_USER="admin"
+
 echo "Using AMI: $AMI_ID"
 
 # Get default VPC ID
@@ -211,14 +210,14 @@ EOFSCRIPT
 
 # Wait for instance to be ready for SSH
 echo "Waiting for instance to be ready for SSH..."
-while ! ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -i "${KEY_NAME}.pem" admin@${PUBLIC_IP} echo "SSH connection successful" >/dev/null 2>&1; do
+while ! ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -i "${KEY_NAME}.pem" ${LOGIN_USER}@${PUBLIC_IP} echo "SSH connection successful" >/dev/null 2>&1; do
 	sleep 5
 done
 
 # Copy and execute the auto-shutdown script
 echo "Installing auto-shutdown script, ephemeral formatting, and a few tools (nvim, uv, alacritty terminfo)..."
-scp -i "${KEY_NAME}.pem" configuration.sh admin@${PUBLIC_IP}:~/
-ssh -i "${KEY_NAME}.pem" admin@${PUBLIC_IP} "sudo bash configuration.sh"
+scp -i "${KEY_NAME}.pem" configuration.sh ${LOGIN_USER}@${PUBLIC_IP}:~/
+ssh -i "${KEY_NAME}.pem" ${LOGIN_USER}@${PUBLIC_IP} "sudo bash configuration.sh"
 
 # Clean up local auto-shutdown script
 rm configuration.sh
@@ -232,7 +231,7 @@ echo "Key pair file: ${KEY_NAME}.pem"
 echo "Security Group: $SG_NAME"
 echo ""
 echo "To connect to your instance:"
-echo "ssh -i ${KEY_NAME}.pem admin@${PUBLIC_IP}"
+echo "ssh -i ${KEY_NAME}.pem ${LOGIN_USER}@${PUBLIC_IP}"
 echo "To shutdown the instance manually:"
 echo "aws ec2 stop-instances --instance-ids $INSTANCE_ID"
 echo "To start the instance:"
