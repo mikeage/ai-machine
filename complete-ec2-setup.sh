@@ -124,28 +124,21 @@ cat <<'EOFSCRIPT' >configuration.sh
 cat << 'EOF' > /tmp/monitor-activity.sh
 #!/bin/bash
 
-# Function to count active SSH sessions
-count_active_sessions() {
-    who | wc -l
-}
+LAST_LOGOUT_FILE="/tmp/last_logout_time"
+INACTIVITY_PERIOD=600
 
-# Function to check if there was any SSH activity in the last 15 minutes
-check_recent_activity() {
-    last -s -15min | grep -v "reboot" | grep -v "wtmp" | grep -v '^$' | wc -l
-}
+while sleep 60; do
+    if [ $(who | wc -l) -eq 0 ]; then
+        # Record logout time if not already done
+        [ -f "$LAST_LOGOUT_FILE" ] || date +%s > "$LAST_LOGOUT_FILE"
 
-# Main loop
-sleep 600  # Wait for 10 minutes before starting monitoring
-while true; do
-    active_sessions=$(count_active_sessions)
-    recent_activity=$(check_recent_activity)
-    
-    if [ $active_sessions -eq 0 ] && [ $recent_activity -eq 0 ]; then
-        logger "No active sessions or recent activity detected. Shutting down."
-        /sbin/shutdown -h now
+        # Shutdown if inactivity exceeds threshold
+        [ $(( $(date +%s) - $(<"$LAST_LOGOUT_FILE") )) -ge $INACTIVITY_PERIOD ] && \
+        { logger "No activity for 15 minutes. Shutting down."; /sbin/shutdown -h now; }
+    else
+        # Reset inactivity timer
+        rm -f "$LAST_LOGOUT_FILE" 2>/dev/null
     fi
-    
-    sleep 60
 done
 EOF
 
