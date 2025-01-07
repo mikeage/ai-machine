@@ -196,9 +196,9 @@ sudo systemctl daemon-reload
 sudo systemctl enable instance-storage
 sudo systemctl start instance-storage
 
-wget https://raw.githubusercontent.com/alacritty/alacritty/master/extra/alacritty.info && tic -xe alacritty,alacritty-direct alacritty.info && sudo tic -xe alacritty,alacritty-direct alacritty.info && rm alacritty.info
+wget -q https://raw.githubusercontent.com/alacritty/alacritty/master/extra/alacritty.info && tic -xe alacritty,alacritty-direct alacritty.info && sudo tic -xe alacritty,alacritty-direct alacritty.info && rm alacritty.info
 curl -fsSL https://astral.sh/uv/install.sh | sh
-wget https://github.com/neovim/neovim/releases/download/v0.10.3/nvim-linux64.tar.gz && tar xfz nvim-linux64.tar.gz && sudo mv nvim-linux64/bin/* /usr/local/bin/ && sudo mv nvim-linux64/lib/* /usr/local/lib/ && sudo mv nvim-linux64/share/* /usr/local/share/ && rm -rf nvim-linux64 nvim-linux64.tar.gz
+wget -q https://github.com/neovim/neovim/releases/download/v0.10.3/nvim-linux64.tar.gz && tar xfz nvim-linux64.tar.gz && sudo mv nvim-linux64/bin/* /usr/local/bin/ && sudo mv nvim-linux64/lib/* /usr/local/lib/ && sudo mv nvim-linux64/share/* /usr/local/share/ && rm -rf nvim-linux64 nvim-linux64.tar.gz
 EOFSCRIPT
 
 # Wait for instance to be ready for SSH
@@ -210,7 +210,7 @@ done
 # Copy and execute the auto-shutdown script
 echo "Installing auto-shutdown script, ephemeral formatting, and a few tools (nvim, uv, alacritty terminfo)..."
 scp -i "${KEY_NAME}.pem" configuration.sh ${LOGIN_USER}@${PUBLIC_IP}:~/
-ssh -i "${KEY_NAME}.pem" ${LOGIN_USER}@${PUBLIC_IP} "sudo bash configuration.sh"
+ssh -i "${KEY_NAME}.pem" ${LOGIN_USER}@${PUBLIC_IP} "bash configuration.sh"
 
 # Clean up local auto-shutdown script
 rm configuration.sh
